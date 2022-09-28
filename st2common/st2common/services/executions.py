@@ -149,6 +149,13 @@ def create_execution_object(
 
     # TODO: This object initialization takes 20-30or so ms
     execution = ActionExecutionDB(**attrs)
+    LOG.debug(
+        "Execution : create_execution_object : liveaction : %s", execution.liveaction
+    )
+    LOG.debug(
+        "Execution : create_execution_object : liveaction : type : %s",
+        type(execution.liveaction),
+    )
     # TODO: Do 100% research this is fully safe and unique in distributed setups
     execution.id = ObjectId()
     execution.web_url = _get_web_url_for_execution(str(execution.id))

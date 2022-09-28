@@ -143,7 +143,8 @@ class LiveActionDB(stormbase.StormFoundationDB):
         self.parameters = encrpyted_parameters
         self = super(LiveActionDB, self).save(*args, **kwargs)
         # Reset parameters to original value after saving them to mongo
-        self.parameters = original_parameters
+        if "parameters" in self:
+            self.parameters = original_parameters
         return self
 
     def update(self, **kwargs):

@@ -19,7 +19,6 @@ import copy
 
 import mongoengine as me
 
-from st2common import log as logging
 from st2common.models.db import stormbase
 from st2common.fields import JSONDictEscapedFieldCompatibilityField
 from st2common.fields import ComplexDateTimeField
@@ -36,9 +35,6 @@ from st2common.util.crypto import read_crypto_key
 from st2common.constants.types import ResourceType
 
 __all__ = ["ActionExecutionDB", "ActionExecutionOutputDB"]
-
-
-LOG = logging.getLogger(__name__)
 
 
 class ActionExecutionDB(stormbase.StormFoundationDB):
@@ -187,28 +183,30 @@ class ActionExecutionDB(stormbase.StormFoundationDB):
     def save(self, *args, **kwargs):
         original_parameters = copy.deepcopy(self.parameters)
         parameters = {}
-        parameters.update(self.action.get("parameters", {}))
-        parameters.update(self.runner.get("runner_parameters", {}))
+        parameters.update(dict(self.action).get("parameters", {}))
+        parameters.update(dict(self.runner).get("runner_parameters", {}))
         secret_parameters = get_secret_parameters(parameters=parameters)
         encrpyted_parameters = encrypt_secret_parameters(
             self.parameters, secret_parameters, self.encryption_key
         )
         self.parameters = encrpyted_parameters
-        if "parameters" in self.liveaction:
+        liveaction_dict = dict(self.liveaction)
+        if "parameters" in liveaction_dict:
             # We need to also encrypt the parameters inside liveaction
-            original_liveaction_parameters = self.liveaction.get("parameters", {})
-
+            original_liveaction_parameters = liveaction_dict.get("parameters", {})
             encrpyted_parameters = encrypt_secret_parameters(
                 original_liveaction_parameters, secret_parameters, self.encryption_key
             )
-            self.liveaction["parameters"] = encrpyted_parameters
+            liveaction_dict["parameters"] = encrpyted_parameters
+            self.liveaction = liveaction_dict
             # We also mask response found inside parameters under liveaction.
             # As mentioned above in mask_secrets function but I don't know what should be
             # the expected behaviour as there we are making all the values because
             # the schema is unknown
+        original_output_value = None
         if self.result:
             original_output_value = self.result
-            schema = self.action.get("output_schema")
+            schema = dict(self.action).get("output_schema")
             if schema is not None:
                 self.result = output_schema.encrypt_secret_output(
                     self.encryption_key, self.result, schema
@@ -221,17 +219,21 @@ class ActionExecutionDB(stormbase.StormFoundationDB):
 
         self = super(ActionExecutionDB, self).save(*args, **kwargs)
         # Resetting to the original values
-        self.parameters = original_parameters
-        if "parameters" in self.liveaction:
-            self.liveaction["parameters"] = original_liveaction_parameters
-        if self.result:
-            self.result = original_output_value
+        setattr(self, "parameters", original_parameters)
+        if hasattr(self, "liveaction"):
+            liveaction_dict = dict(self.liveaction)
+            if "parameters" in liveaction_dict:
+                liveaction_dict["parameters"] = original_liveaction_parameters
+            self.liveaction = liveaction_dict
+
+        if hasattr(self, "result") and original_output_value is not None:
+            setattr(self, "result", original_output_value)
         return self
 
     def update(self, **kwargs):
         parameters = {}
-        parameters.update(self.action.get("parameters", {}))
-        parameters.update(self.runner.get("runner_parameters", {}))
+        parameters.update(dict(self.action).get("parameters", {}))
+        parameters.update(dict(self.runner).get("runner_parameters", {}))
         secret_parameters = get_secret_parameters(parameters=parameters)
         encrpyted_parameters = encrypt_secret_parameters(
             self.parameters, secret_parameters, self.encryption_key
@@ -247,7 +249,7 @@ class ActionExecutionDB(stormbase.StormFoundationDB):
         if "set__result" in kwargs and "result" in kwargs["set__result"]:
             output_value = kwargs["set__result"]["result"]
             # Need output key
-            schema = self.action.get("output_schema")
+            schema = dict(self.action).get("output_schema")
             kwargs["set__result"]["result"] = output_schema.encrypt_secret_output(
                 self.encryption_key, output_value, schema
             )
@@ -257,7 +259,7 @@ class ActionExecutionDB(stormbase.StormFoundationDB):
             encrpyted_parameters = encrypt_secret_parameters(
                 original_liveaction_parameters, secret_parameters, self.encryption_key
             )
-            self.liveaction["parameters"] = encrpyted_parameters
+            self.liveaction.parameters = encrpyted_parameters
 
         return super(ActionExecutionDB, self).update(**kwargs)
 
