@@ -23,4 +23,4 @@ class Pack(core.Resource):
     _plural = "Packs"
     _plural_display_name = "Packs"
     _url_path = "packs"
-    _repr_attributes = ["name", "description", "version", "author", "status"]
+    _repr_attributes = ["name", "description", "version", "author", "pack_enforcement"]
