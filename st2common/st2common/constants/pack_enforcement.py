@@ -1,5 +1,6 @@
 # Copyright 2020 The StackStorm Authors.
 # Copyright 2019 Extreme Networks, Inc.
+# Copyright 2025 Orchestral.ai, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,3 +27,8 @@ PACK_ENFORCEMENT_STATUSES = [
     PACK_ENFORCEMENT_STATUS_ACTIVE,
     PACK_ENFORCEMENT_STATUS_INACTIVE,
 ]
+
+PACK_ENFORCEMENT_LOG_ERROR_MESSAGE = """
+%(class)s for the pack %(pack)s could not be registered due to license provision, 
+please upgrade license to register actions for the pack
+"""

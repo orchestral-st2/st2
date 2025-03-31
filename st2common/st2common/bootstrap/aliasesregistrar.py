@@ -21,6 +21,7 @@ import st2common.content.utils as content_utils
 
 from st2common import log as logging
 from st2common.constants.meta import ALLOWED_EXTS
+from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_LOG_ERROR_MESSAGE
 from st2common.bootstrap.base import ResourceRegistrar
 from st2common.models.api.action import ActionAliasAPI
 from st2common.persistence.action import Action
@@ -60,11 +61,8 @@ class AliasesRegistrar(ResourceRegistrar):
             try:
                 # Check if pack has enforcement active then do not register aliases
                 if packs_service.is_pack_enforcement_active(pack):
-                    LOG.error(
-                        'Aliases for the pack "%s" could not be registered due to license provision'
-                        ', please upgrade license to register aliases for the pack',
-                        pack,
-                    )
+                    format_values = {"class": self.__class__.__name__, "pack": pack}
+                    LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
                     continue
                 LOG.debug(
                     "Registering aliases from pack %s:, dir: %s", pack, aliases_dir
@@ -108,11 +106,8 @@ class AliasesRegistrar(ResourceRegistrar):
 
         # Check if pack has enforcement active then do not register aliases
         if packs_service.is_pack_enforcement_active(pack):
-            LOG.error(
-                        'Aliases for the pack "%s" could not be registered due to license provision'
-                        ', please upgrade license to register aliases for the pack',
-                        pack,
-                        )
+            format_values = {"class": self.__class__.__name__, "pack": pack}
+            LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
             return registered_count
 
         LOG.debug("Registering aliases from pack %s:, dir: %s", pack, aliases_dir)

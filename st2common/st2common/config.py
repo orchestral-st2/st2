@@ -429,6 +429,8 @@ def register_opts(ignore_errors=False):
             default=(24 * 60 * 60),
             help="Service token ttl in seconds.",
         ),
+        cfg.StrOpt("host", default="127.0.0.1", help="Auth server host"),
+        cfg.IntOpt("port", default=9100, help="Auth server port"),
     ]
 
     do_register_opts(auth_opts, "auth", ignore_errors)

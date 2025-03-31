@@ -123,7 +123,7 @@ class PackAsyncCommand(ActionRunCommandMixin, resource.ResourceCommand):
         detail_arg_grp.add_argument(
             "--attr",
             nargs="+",
-            default=["ref", "name", "description", "version", "author"],
+            default=["ref", "name", "description", "version", "author", "pack_enforcement"],
             help=(
                 "List of attributes to include in the "
                 'output. "all" or unspecified will '
@@ -240,7 +240,6 @@ class PackShowCommand(PackResourceCommand):
 
 
 class PackInstallCommand(PackAsyncCommand):
-    display_attributes = ["ref", "name", "description", "version", "author", "pack_enforcement"]
     attribute_display_order = [ "ref", "name", "description", "version", "author", "pack_enforcement"]
     def __init__(self, resource, *args, **kwargs):
         super(PackInstallCommand, self).__init__(
@@ -356,7 +355,7 @@ class PackInstallCommand(PackAsyncCommand):
             self.print_output(
                 pack_instance,
                 table.PropertyValueTable,
-                attributes=self.display_attributes,
+                attributes=args.attr,
                 json=args.json,
                 yaml=args.yaml,
                 attribute_display_order=self.attribute_display_order,
@@ -373,7 +372,7 @@ class PackInstallCommand(PackAsyncCommand):
             self.print_output(
                 pack_instances,
                 table.MultiColumnTable,
-                attributes=self.display_attributes,
+                attributes=args.attr,
                 widths=args.width,
                 json=args.json,
                 yaml=args.yaml,

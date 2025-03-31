@@ -49,9 +49,6 @@ For example "my_%s.py".
 
 # Cache which stores pack name -> pack base path mappings
 PACK_NAME_TO_BASE_PATH_CACHE = {}
-DEFAULT_AUTH_PORT = 9100
-
-DEFAULT_BASE_URL = "http://127.0.0.1"
 
 def get_pack_group():
     """
@@ -434,8 +431,8 @@ def get_license_info():
     Returns information of license from license api 
     :rtype: ``dict``
     """
-    LICENSE_URL = "%s:%s/licenses/validate" % (DEFAULT_BASE_URL, DEFAULT_AUTH_PORT)
-
+    LICENSE_URL = "http://%s:%s/licenses/validate" % (cfg.CONF.auth.host, cfg.CONF.auth.port)
+    
     if not os.path.exists(LICENSE_FILE_PATH):
         raise ValueError('License file "%s" doesn\'t exist' % (LICENSE_FILE_PATH))
 

@@ -23,6 +23,7 @@ from oslo_config import cfg
 from st2common import log as logging
 from st2common.content import utils as content_utils
 from st2common.constants.meta import ALLOWED_EXTS
+from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_LOG_ERROR_MESSAGE
 from st2common.bootstrap.base import ResourceRegistrar
 from st2common.models.api.pack import ConfigAPI
 from st2common.persistence.pack import Config
@@ -84,11 +85,8 @@ class ConfigsRegistrar(ResourceRegistrar):
             try:
                 # Check if pack has enforcement active then do not register configs
                 if packs_service.is_pack_enforcement_active(pack_name):
-                    LOG.error(
-                        'Configs for the pack "%s" could not be registered due to license provision'
-                        ', please upgrade license to register configs for the pack',
-                        pack_name,
-                    )
+                    format_values = {"class": self.__class__.__name__, "pack": pack_name}
+                    LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
                     continue
                 self._register_config_for_pack(pack=pack_name, config_path=config_path)
             except Exception as e:
@@ -126,11 +124,8 @@ class ConfigsRegistrar(ResourceRegistrar):
 
         # Check if pack has enforcement active then do not register configs
         if packs_service.is_pack_enforcement_active(pack_name):
-            LOG.error(
-                        'Configs for the pack "%s" could not be registered due to license provision'
-                        ', please upgrade license to register configs for the pack',
-                        pack_name,
-                        )
+            format_values = {"class": self.__class__.__name__, "pack": pack_name}
+            LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
             return 0
 
         LOG.debug("Registering configs from pack %s, dir: %s", pack_name, config_path)

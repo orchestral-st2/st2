@@ -102,4 +102,4 @@ class Command(object):
         elif "Active" in subject.pack_enforcement:
              print(DisplayColors.colorize('Could not register content such as actions, rules, sensors etc '
                       'for the "%s" pack due to license provision, please upgrade license ' 
-                      'to use this pack '%(subject.name), DisplayColors.RED))
+                      'to install this pack '%(subject.name), DisplayColors.RED))
