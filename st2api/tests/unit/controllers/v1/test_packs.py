@@ -42,6 +42,9 @@ from st2tests.fixtures.packs.dummy_pack_15.fixture import (
     PACK_NAME as DUMMY_PACK_15,
 )
 
+from st2common.constants.pack import SYSTEM_PACK_NAMES
+from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_STATUS_ACTIVE
+
 __all__ = ["PacksControllerTestCase"]
 
 PACK_INDEX = {
@@ -150,9 +153,29 @@ class PacksControllerTestCase(
             author="foo",
             email="test@example.com",
         )
+        cls.pack_db_4 = PackDB(
+            name="pack3-name",
+            ref="pack3-ref",
+            description="foo",
+            version="0.1.0",
+            author="foo",
+            email="test@example.com",
+            pack_enforcement = "Active",
+        )
+        cls.pack_db_5 = PackDB(
+            name="pack3-name",
+            ref="pack3-ref",
+            description="foo",
+            version="0.1.0",
+            author="foo",
+            email="test@example.com",
+            pack_enforcement = "Inactive",
+        )
         Pack.add_or_update(cls.pack_db_1)
         Pack.add_or_update(cls.pack_db_2)
         Pack.add_or_update(cls.pack_db_3)
+        Pack.add_or_update(cls.pack_db_4)
+        Pack.add_or_update(cls.pack_db_5)
 
     def test_get_all(self):
         resp = self.app.get("/v1/packs")
@@ -691,3 +714,42 @@ class PacksControllerTestCase(
 
     def _do_delete(self, object_ids):
         pass
+
+    @mock.patch.object(pack_service, "get_pack_by_ref")
+    def test_pack_in_system_packs(self, mock_get_pack):
+        """Test when pack is in SYSTEM_PACK_NAMES, should return False."""
+        system_pack = "core"
+        SYSTEM_PACK_NAMES.append(system_pack)  # Ensure it's in system packs
+        mock_get_pack.return_value = self.pack_db_1
+        self.assertFalse(pack_service.is_pack_enforcement_active(system_pack))
+        mock_get_pack.assert_not_called()
+        SYSTEM_PACK_NAMES.remove(system_pack)  # Cleanup
+
+    @mock.patch.object(pack_service, "get_pack_by_ref")
+    def test_pack_not_in_system_packs_active(self, mock_get_pack):
+        """Test when pack is NOT in SYSTEM_PACK_NAMES and pack enforcement is active."""
+        pack_name = "custom_pack"
+        SYSTEM_PACK_NAMES.clear()  # Ensure it's NOT in system packs
+        mock_get_pack.return_value = self.pack_db_4
+        self.assertTrue(pack_service.is_pack_enforcement_active(pack_name))
+        mock_get_pack.assert_called_once_with(pack_ref=pack_name)
+
+    @mock.patch.object(pack_service, "get_pack_by_ref")
+    def test_pack_not_in_system_packs_inactive(self, mock_get_pack):
+        """Test when pack is NOT in SYSTEM_PACK_NAMES and enforcement is NOT active."""
+        pack_name = "new_pack"
+        SYSTEM_PACK_NAMES.clear()
+        mock_get_pack.return_value = self.pack_db_5
+        
+        self.assertFalse(pack_service.is_pack_enforcement_active(pack_name))
+        mock_get_pack.assert_called_once_with(pack_ref=pack_name)
+    
+    @mock.patch.object(pack_service, "get_pack_by_ref")
+    def test_pack_not_found(self, mock_get_pack):
+        """Test when get_pack_by_ref returns None, should return False."""
+        pack_name = "missing_pack"
+        SYSTEM_PACK_NAMES.clear()
+        mock_get_pack.return_value = None  # Simulate missing pack
+        
+        self.assertFalse(pack_service.is_pack_enforcement_active(pack_name))
+        mock_get_pack.assert_called_once_with(pack_ref=pack_name)

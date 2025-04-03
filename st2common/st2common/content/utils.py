@@ -38,6 +38,7 @@ __all__ = [
     "get_relative_path_to_pack_file",
     "check_pack_directory_exists",
     "check_pack_content_directory_exists",
+    "get_license_info",
 ]
 
 INVALID_FILE_PATH_ERROR = """

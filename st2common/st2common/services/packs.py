@@ -48,6 +48,7 @@ __all__ = [
     "temp_backup_action_files",
     "restore_temp_action_files",
     "remove_temp_action_files",
+    "is_pack_enforcement_active"
 ]
 
 EXCLUDE_FIELDS = ["repo_url", "email"]
