@@ -63,6 +63,7 @@ __all__ = [
     "apply_pack_owner_group",
     "apply_pack_permissions",
     "get_and_set_proxy_config",
+    "check_license_and_get_pack_enforcement_status",
 ]
 
 LOG = logging.getLogger(__name__)

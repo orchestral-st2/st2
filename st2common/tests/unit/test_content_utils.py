@@ -333,3 +333,20 @@ class ContentUtilsTestCase(unittest2.TestCase):
         mock_exists.assert_called_once_with(os.path.join(LICENSE_FILE_PATH))
         mock_file.assert_called_once_with(os.path.join(LICENSE_FILE_PATH), "r")
         mock_post.assert_called_once()
+
+    @mock.patch("os.path.exists", return_value=True)
+    @mock.patch(mock_open_name, new_callable=mock.mock_open, create=True)
+    @mock.patch("requests.post")
+    def test_get_license_info_request_exception(self, mock_post, mock_file, mock_exists):
+        """Test when requests.post raises an exception."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 500  # Simulating a server error
+        mock_post.return_value = mock_response
+        
+        with self.assertRaises(Exception) as context:
+            get_license_info()
+        
+        self.assertIn("Could not request url", str(context.exception))
+        mock_exists.assert_called_once_with(LICENSE_FILE_PATH)
+        mock_file.assert_called_once_with(LICENSE_FILE_PATH, "r")
+        mock_post.assert_called_once()
