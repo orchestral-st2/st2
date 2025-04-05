@@ -21,7 +21,7 @@ import sys
 import mock
 import unittest2
 
-from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_STATUS_INACTIVE
+from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_STATUS_ACTIVE, PACK_ENFORCEMENT_STATUS_INACTIVE
 from st2common.models.db.pack import PackDB
 from st2common.persistence.pack import Pack
 
@@ -36,7 +36,7 @@ from st2common.util.monkey_patch import use_select_poll_workaround
 
 use_select_poll_workaround()
 
-from st2common.util.pack_management import check_license_and_get_pack_enforcement_status, eval_repo_url
+from st2common.util.pack_management import _get_pack_enforcement_status, check_license_and_get_pack_enforcement_status, eval_repo_url
 
 __all__ = ["InstallPackTestCase"]
 
@@ -126,3 +126,35 @@ class InstallPackTestCase(unittest2.TestCase):
         
         result = check_license_and_get_pack_enforcement_status(pack_name)
         self.assertEqual(result, "Active")
+
+    def test_license_with_pack_capability_and_pack_active(self):
+        license_info = {
+            "license": {
+                "capabilities": ["packs"],
+                "description": {"packs": {"count": 2}}
+            }
+        }
+        packs_with_inactive = ["pack1", "pack2"]
+        result = _get_pack_enforcement_status(license_info, packs_with_inactive, "pack3")
+        self.assertEqual(result, PACK_ENFORCEMENT_STATUS_ACTIVE)
+
+    def test_license_with_pack_capability_and_pack_inactive(self):
+        license_info = {
+            "license": {
+                "capabilities": ["packs"],
+                "description": {"packs": {"count": 3}}
+            }
+        }
+        packs_with_inactive = ["pack1"]
+        result = _get_pack_enforcement_status(license_info, packs_with_inactive, "pack1")
+        self.assertEqual(result, PACK_ENFORCEMENT_STATUS_INACTIVE)
+
+    def test_license_without_packs_capability_raises_value_error(self):
+        license_info = {
+            "license": {
+                "capabilities": ["basic"]
+            }
+        }
+        with self.assertRaises(ValueError) as context:
+            _get_pack_enforcement_status(license_info, [], "pack1")
+        self.assertIn("License not found or capabilities to install packs", str(context.exception))
