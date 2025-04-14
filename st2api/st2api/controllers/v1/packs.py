@@ -99,15 +99,22 @@ class PackInstallController(ActionExecutionsControllerMixin):
         
         if len(pack_install_request.packs) == 1:
             pack = pack_install_request.packs[0]
-            pack_status  = check_license_and_get_pack_status(pack)
+            pack_status = check_license_and_get_pack_status(pack)
             if not pack_status:
-                raise AccessDeniedError(message=PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE % pack, user_db=requester_user)
+                raise AccessDeniedError(
+                    message=PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE % pack,
+                    user_db=requester_user,
+                )
         else:
             for pack in pack_install_request.packs:
-                pack_status  = check_license_and_get_pack_status(pack)
+                pack_status = check_license_and_get_pack_status(pack)
                 if not pack_status:
-                    raise AccessDeniedError(message=PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE % pack_install_request.packs, user_db=requester_user)
-        
+                    raise AccessDeniedError(
+                        message=PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE
+                        % pack_install_request.packs,
+                        user_db=requester_user,
+                    )
+                
         parameters = {
             "packs": pack_install_request.packs,
         }

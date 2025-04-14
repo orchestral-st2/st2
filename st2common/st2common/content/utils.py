@@ -53,6 +53,7 @@ For example "my_%s.py".
 # Cache which stores pack name -> pack base path mappings
 PACK_NAME_TO_BASE_PATH_CACHE = {}
 
+
 def get_pack_group():
     """
     Return a name of the group with write permissions to pack directory.

@@ -78,7 +78,8 @@ class InstallPackTestCase(unittest2.TestCase):
     @mock.patch("st2common.util.pack_management._get_pack_status")
     @mock.patch.object(Pack, "get_all")
     def test_check_license_and_get_pack_status_False(self, mock_get_all, mock_get_pack_status, mock_get_license, mock_get_enabled_packs):
-        """Test when pack is NOT in SYSTEM_PACK_NAMES or pack is not DEFAULT_PACK_NAME and checks license for pack returning False."""
+        """Test when pack is NOT in SYSTEM_PACK_NAMES 
+           or pack is not DEFAULT_PACK_NAME and checks license for pack returning False."""
         pack_name = "custom_pack"
         SYSTEM_PACK_NAMES.clear()
         pack1_model_args = {
@@ -138,7 +139,8 @@ class InstallPackTestCase(unittest2.TestCase):
     @mock.patch("st2common.util.pack_management._get_pack_status")
     @mock.patch.object(Pack, "get_all")
     def test_check_license_and_get_pack_status_True(self, mock_get_all, mock_get_pack_status, mock_get_license, mock_get_enabled_packs):
-        """Test when pack is NOT in SYSTEM_PACK_NAMES or pack is not DEFAULT_PACK_NAME and checks license for pack returning True"""
+        """Test when pack is NOT in SYSTEM_PACK_NAMES 
+           or pack is not DEFAULT_PACK_NAME and checks license for pack returning True"""
         pack_name = "custom_pack"
         SYSTEM_PACK_NAMES.clear()
         pack1_model_args = {
@@ -194,7 +196,8 @@ class InstallPackTestCase(unittest2.TestCase):
         self.assertEqual(result, True)
 
     def test_license_with_pack_capability_and_adding_new_pack_returns_pack_status_False(self):
-        """Test when license has pack capability and license count is 2 and we add new pack returing pack enabled status as False"""
+        """Test when license has pack capability 
+           and license count is 2 and we add new pack returing pack enabled status as False"""
         license_info = {
             "license": {
                 "capabilities": ["packs"],
@@ -206,7 +209,8 @@ class InstallPackTestCase(unittest2.TestCase):
         self.assertEqual(result, False)
 
     def test_license_with_pack_capability_and_adding_new_pack_returns_pack_status_True(self):
-        """Test when license has pack capability and license count is 3 and we add new pack returing pack enabled status as True"""
+        """Test when license has pack capability and license count is 3
+           and we add new pack returing pack enabled status as True"""
         license_info = {
             "license": {
                 "capabilities": ["packs"],
