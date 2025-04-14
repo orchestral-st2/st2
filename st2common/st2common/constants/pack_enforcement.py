@@ -15,20 +15,13 @@
 # limitations under the License.
 
 __all__ = [
-    "PACK_ENFORCEMENT_STATUS_ACTIVE",
-    "PACK_ENFORCEMENT_STATUS_INACTIVE",
-    "PACK_ENFORCEMENT_STATUSES",
-]
-
-PACK_ENFORCEMENT_STATUS_ACTIVE = "Active"
-PACK_ENFORCEMENT_STATUS_INACTIVE = "Inactive"
-
-PACK_ENFORCEMENT_STATUSES = [
-    PACK_ENFORCEMENT_STATUS_ACTIVE,
-    PACK_ENFORCEMENT_STATUS_INACTIVE,
+    "PACK_ENFORCEMENT_LOG_ERROR_MESSAGE",
+    "PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE",
 ]
 
 PACK_ENFORCEMENT_LOG_ERROR_MESSAGE = """
-%(class)s for the pack %(pack)s could not be registered due to license provision, 
-please upgrade license to register actions for the pack
+%(class)s for the pack "%(pack)s" could not be registered due to license provision, 
+please upgrade license to register %(class)s for the pack
 """
+PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE = """
+Could not install "%s" pack due to license provision, please upgrade license to install this pack"""

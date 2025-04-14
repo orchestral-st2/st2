@@ -431,6 +431,11 @@ def register_opts(ignore_errors=False):
         ),
         cfg.StrOpt("host", default="127.0.0.1", help="Auth server host"),
         cfg.IntOpt("port", default=9100, help="Auth server port"),
+        cfg.StrOpt(
+            "auth_api_url",
+            default="http://127.0.0.1:9100/",
+            help="Auth API Base URL endpoint excluding the version",
+        ),
     ]
 
     do_register_opts(auth_opts, "auth", ignore_errors)

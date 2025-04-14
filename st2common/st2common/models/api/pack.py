@@ -28,8 +28,6 @@ from st2common.constants.keyvalue import USER_SCOPE
 from st2common.constants.pack import PACK_REF_WHITELIST_REGEX
 from st2common.constants.pack import PACK_VERSION_REGEX
 from st2common.constants.pack import ST2_VERSION_REGEX
-from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_STATUS_ACTIVE
-from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_STATUSES
 from st2common.persistence.pack import ConfigSchema
 from st2common.models.api.base import BaseAPI
 from st2common.models.db.pack import PackDB
@@ -155,12 +153,11 @@ class PackAPI(BaseAPI):
                 "description": "Location of the pack on disk in st2 system.",
                 "required": False,
             },
-            "pack_enforcement" : {
-                "type": "string",
-                "description": "Active or Inactive enforcement on pack to load and register the packs",
-                "required" : False,
-                "enum": PACK_ENFORCEMENT_STATUSES,
-            }
+            "enabled": {
+                "description": "Flag indicating of pack is enabled.",
+                "type": "boolean",
+                "default": False,
+            },
         },
         # NOTE: We add this here explicitly so we can gracefuly add new attributs to pack.yaml
         # without breaking existing installations
@@ -221,7 +218,7 @@ class PackAPI(BaseAPI):
         pack_dir = getattr(pack, "path", None)
         dependencies = getattr(pack, "dependencies", [])
         system = getattr(pack, "system", {})
-        pack_enforcement = getattr(pack, "pack_enforcement", PACK_ENFORCEMENT_STATUS_ACTIVE)
+        enabled = getattr(pack, "enabled", False)
 
         model = cls.model(
             ref=ref,
@@ -238,7 +235,7 @@ class PackAPI(BaseAPI):
             stackstorm_version=stackstorm_version,
             path=pack_dir,
             python_versions=python_versions,
-            pack_enforcement=pack_enforcement
+            enabled=enabled,
         )
         return model
 

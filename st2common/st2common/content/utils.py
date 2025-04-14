@@ -24,8 +24,10 @@ from st2common.constants.system import LICENSE_FILE_PATH
 from oslo_config import cfg
 
 from st2common.constants.action import LIBS_DIR as ACTION_LIBS_DIR
+from st2common.log import LOG
 from st2common.util.types import OrderedSet
 from st2common.util.shell import quote_unix
+from st2common.util.url import get_url_without_trailing_slash
 
 __all__ = [
     "get_pack_group",
@@ -432,8 +434,13 @@ def get_license_info():
     Returns information of license from license api 
     :rtype: ``dict``
     """
-    LICENSE_URL = "http://%s:%s/licenses/validate" % (cfg.CONF.auth.host, cfg.CONF.auth.port)
-    
+    if cfg.CONF.auth.auth_api_url:
+        auth_api_url = get_url_without_trailing_slash(cfg.CONF.auth.auth_api_url)
+        LICENSE_URL = "%s/licenses/validate" % auth_api_url
+    else:
+        LOG.warn('"auth.auth_api_url" configuration option is not configured')
+        LICENSE_URL = "http://%s:%s/licenses/validate" % (cfg.CONF.auth.host, cfg.CONF.auth.port)
+
     if not os.path.exists(LICENSE_FILE_PATH):
         raise ValueError('License file "%s" doesn\'t exist' % (LICENSE_FILE_PATH))
 

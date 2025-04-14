@@ -19,10 +19,10 @@ import unittest2
 
 from st2common.models.db.pack import PackDB
 from st2common.persistence.pack import Pack
-from st2common.util.pack import get_pack_common_libs_path_for_pack_db
+from st2common.util.pack import get_all_enabled_packs_from_db, get_pack_common_libs_path_for_pack_db
 from st2common.util.pack import get_pack_warnings
 from st2common.util.pack import get_pack_ref_from_metadata
-from st2common.util.pack import get_all_packs_with_inactive_pack_enforcement_status_from_db, get_pack_common_libs_path_for_pack_db
+from st2common.util.pack import get_pack_common_libs_path_for_pack_db
 
 
 class PackUtilsTestCase(unittest2.TestCase):
@@ -90,15 +90,15 @@ class PackUtilsTestCase(unittest2.TestCase):
         self.assertRaises(ValueError, get_pack_ref_from_metadata, pack_metadata)
     
     @mock.patch.object(Pack, "get_all")
-    def test_packs_with_inactive_pack_enforcement_status_from_db(self, mock_get_all):
-        """Test when some packs have inactive enforcement status."""
+    def test_packs_with_pack_enabled_True_status_from_db(self, mock_get_all):
+        """Test when packs status is True from pack db."""
         pack1_model_args = {
             "name": "pack1",
             "ref": "pack1",
             "description": "pack1 pack",
             "version": "0.1.0",
             "author": "Volkswagen",
-            "pack_enforcement" : "Inactive",
+            "enabled" : True,
         }
         pack2_model_args = {
             "name": "pack2",
@@ -106,7 +106,7 @@ class PackUtilsTestCase(unittest2.TestCase):
             "description": "pack2 pack",
             "version": "0.1.0",
             "author": "Volkswagen",
-            "pack_enforcement" : "Active",
+            "enabled" : False,
         }
         pack3_model_args = {
             "name": "pack3",
@@ -114,33 +114,33 @@ class PackUtilsTestCase(unittest2.TestCase):
             "description": "pack3 pack",
             "version": "0.1.0",
             "author": "Volkswagen",
-            "pack_enforcement" : "Inactive",
+            "enabled" : True,
         }
         mock_get_all.return_value = [
             PackDB(**pack1_model_args),
             PackDB(**pack2_model_args),
             PackDB(**pack3_model_args)
         ]
-        result = get_all_packs_with_inactive_pack_enforcement_status_from_db()
+        result = get_all_enabled_packs_from_db()
         self.assertEqual(result, ["pack1", "pack3"])
     
     @mock.patch.object(Pack, "get_all")
-    def test_no_packs_found_with_inactive_pack_enforcement_status_from_db(self, mock_get_all):
+    def test_no_packs_found_with_pack_enabled_True_status_from_db(self, mock_get_all):
         """Test when there are no packs in the database."""
         mock_get_all.return_value = []
-        result = get_all_packs_with_inactive_pack_enforcement_status_from_db()
+        result = get_all_enabled_packs_from_db()
         self.assertEqual(result, [])
     
     @mock.patch.object(Pack, "get_all")
-    def test_no_inactive_packs_for_pack_enforcement_status_from_db(self, mock_get_all):
-        """Test when all packs have active enforcement status."""
+    def test_packs_for_pack_enabled_False_status_from_db(self, mock_get_all):
+        """Test when packs status is False from pack db."""
         pack1_model_args = {
             "name": "pack1",
             "ref": "pack1",
             "description": "pack1 pack",
             "version": "0.1.0",
             "author": "Volkswagen",
-            "pack_enforcement" : "Active",
+            "enabled" : False,
         }
         pack2_model_args = {
             "name": "pack2",
@@ -148,11 +148,11 @@ class PackUtilsTestCase(unittest2.TestCase):
             "description": "pack2 pack",
             "version": "0.1.0",
             "author": "Volkswagen",
-            "pack_enforcement" : "Active",
+            "enabled" : False,
         }
         mock_get_all.return_value = [
             PackDB(**pack1_model_args),
             PackDB(**pack2_model_args)
         ]
-        result = get_all_packs_with_inactive_pack_enforcement_status_from_db()
+        result = get_all_enabled_packs_from_db()
         self.assertEqual(result, [])

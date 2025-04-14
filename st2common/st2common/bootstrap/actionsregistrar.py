@@ -63,8 +63,8 @@ class ActionsRegistrar(ResourceRegistrar):
                 continue
             try:
                 # Check if pack has enforcement active then do not register actions
-                if packs_service.is_pack_enforcement_active(pack):
-                    format_values = {"class": self.__class__.__name__, "pack": pack}
+                if not packs_service.is_pack_enabled(pack):
+                    format_values = {"class": self.get_class_prefix(), "pack": pack}
                     LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
                     continue
                 LOG.debug(
@@ -108,8 +108,8 @@ class ActionsRegistrar(ResourceRegistrar):
             return registered_count
 
         # Check if pack has enforcement active then do not register actions
-        if packs_service.is_pack_enforcement_active(pack):
-            format_values = {"class": self.__class__.__name__, "pack": pack}
+        if not packs_service.is_pack_enabled(pack):
+            format_values = {"class": self.get_class_prefix(), "pack": pack}
             LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
             return registered_count
 

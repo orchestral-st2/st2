@@ -194,7 +194,7 @@ class ResourceController(object):
         limit = validate_limit_query_param(limit=limit, requester_user=requester_user)
         eop = offset + int(limit) if limit else None
 
-        filters = {}
+        filters = {"enabled":True}
         for k, v in six.iteritems(self.supported_filters):
             filter_value = raw_filters.get(k, None)
 

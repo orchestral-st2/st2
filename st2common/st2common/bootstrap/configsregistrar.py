@@ -84,8 +84,8 @@ class ConfigsRegistrar(ResourceRegistrar):
 
             try:
                 # Check if pack has enforcement active then do not register configs
-                if packs_service.is_pack_enforcement_active(pack_name):
-                    format_values = {"class": self.__class__.__name__, "pack": pack_name}
+                if not packs_service.is_pack_enabled(pack_name):
+                    format_values = {"class": self.get_class_prefix(), "pack": pack_name}
                     LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
                     continue
                 self._register_config_for_pack(pack=pack_name, config_path=config_path)
@@ -123,8 +123,8 @@ class ConfigsRegistrar(ResourceRegistrar):
             return 0
 
         # Check if pack has enforcement active then do not register configs
-        if packs_service.is_pack_enforcement_active(pack_name):
-            format_values = {"class": self.__class__.__name__, "pack": pack_name}
+        if not packs_service.is_pack_enabled(pack_name):
+            format_values = {"class": self.get_class_prefix(), "pack": pack_name}
             LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
             return 0
 

@@ -25,7 +25,6 @@ from st2common.util import schema as util_schema
 from st2common.constants.pack import MANIFEST_FILE_NAME
 from st2common.constants.pack import PACK_REF_WHITELIST_REGEX
 from st2common.constants.pack import RESERVED_PACK_LIST
-from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_STATUS_INACTIVE
 from st2common.content.loader import MetaLoader
 from st2common.persistence.pack import Pack
 from st2common.exceptions.apivalidation import ValueValidationException
@@ -40,7 +39,7 @@ __all__ = [
     "get_pack_common_libs_path_for_pack_db",
     "validate_config_against_schema",
     "normalize_pack_version",
-    "get_all_packs_with_inactive_pack_enforcement_status_from_db",
+    "get_all_enabled_packs_from_db",
 ]
 
 # Common format for python 2.7 warning
@@ -238,15 +237,15 @@ def normalize_pack_version(version):
 
     return version
 
-def get_all_packs_with_inactive_pack_enforcement_status_from_db():
+def get_all_enabled_packs_from_db():
     """
-    Get packs having pack enforcement as inactive from Pack DB
+    Get packs having flag as enabled True from Pack DB
     :rtype: ``list``
     """
     try:
         pack_dbs = Pack.get_all()
-        packs_with_inactive_pack_enforcement = list(pack_db.ref for pack_db in pack_dbs if pack_db.pack_enforcement.strip()==PACK_ENFORCEMENT_STATUS_INACTIVE)
-        return packs_with_inactive_pack_enforcement
+        enabled_packs = list(pack_db.ref for pack_db in pack_dbs if pack_db.enabled)
+        return enabled_packs
     except StackStormDBObjectNotFoundError:
         pack_dbs = None
         raise

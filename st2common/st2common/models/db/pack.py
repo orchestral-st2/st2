@@ -22,7 +22,6 @@ from st2common.models.db import stormbase
 from st2common.constants.types import ResourceType
 from st2common.constants.pack import PACK_VERSION_REGEX
 from st2common.constants.pack import ST2_VERSION_REGEX
-from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_STATUS_ACTIVE
 from st2common.util.secrets import get_secret_parameters
 from st2common.util.secrets import mask_secret_parameters
 
@@ -51,11 +50,11 @@ class PackDB(stormbase.StormFoundationDB, stormbase.UIDFieldMixin, me.DynamicDoc
     path = me.StringField(required=False)
     dependencies = me.ListField(field=me.StringField())
     system = me.DictField()
-
-    pack_enforcement = me.StringField(
+    
+    enabled = me.BooleanField(
         required=False,
-        default=PACK_ENFORCEMENT_STATUS_ACTIVE,
-        help_text="Pack enforcement status.",
+        default=False,
+        help_text="A flag indicating whether the pack is enabled.",
     )
     meta = {"indexes": stormbase.UIDFieldMixin.get_indexes()}
 

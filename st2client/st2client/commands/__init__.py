@@ -19,7 +19,6 @@ from __future__ import absolute_import
 import abc
 import six
 import logging
-from st2client.utils.color import DisplayColors
 from st2client.formatters import doc
 
 
@@ -94,12 +93,3 @@ class Command(object):
             print(output)
         else:
             print("No matching items found")
-    
-    def print_pack_enforcement_active_output(self, subject):
-        if isinstance(subject, list):
-            for sub in subject:
-                self.print_pack_enforcement_active_output(sub)
-        elif "Active" in subject.pack_enforcement:
-             print(DisplayColors.colorize('Could not register content such as actions, rules, sensors etc '
-                      'for the "%s" pack due to license provision, please upgrade license ' 
-                      'to install this pack '%(subject.name), DisplayColors.RED))
