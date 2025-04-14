@@ -19,6 +19,7 @@ from __future__ import absolute_import
 import abc
 import six
 import logging
+
 from st2client.formatters import doc
 
 

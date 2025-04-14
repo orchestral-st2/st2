@@ -195,6 +195,7 @@ class ResourceRegistrar(object):
         content["files"] = pack_file_list
         content["path"] = pack_dir
         content["enabled"] = check_license_and_get_pack_status(pack_name)
+        
         pack_api = PackAPI(**content)
         pack_api.validate()
         pack_db = PackAPI.to_model(pack_api)
