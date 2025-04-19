@@ -436,6 +436,24 @@ def register_opts(ignore_errors=False):
             default="http://127.0.0.1:9100/",
             help="Auth API Base URL endpoint excluding the version",
         ),
+        cfg.BoolOpt('use_ssl', default=False, help='Use HTTPS or not'),
+        cfg.StrOpt(
+            'ca_cert',
+            default='/etc/ssl/st2/cacert.pem',
+            help='Path to CA cert to verify server',
+        ),
+        cfg.StrOpt(
+            "cert",
+            default="/etc/ssl/st2/st2.crt",
+            help='Path to the SSL certificate file. Only used when "use_ssl" is specified.',
+        ),
+        cfg.StrOpt(
+            "key",
+            default="/etc/ssl/st2/st2.key",
+            help='Path to the SSL private key file. Only used when "use_ssl" is specified.',
+        ),
+        
+
     ]
 
     do_register_opts(auth_opts, "auth", ignore_errors)

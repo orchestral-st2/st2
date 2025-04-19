@@ -440,7 +440,15 @@ def get_license_info():
         LICENSE_URL = "%s/licenses/validate" % auth_api_url
     else:
         LOG.warn('"auth.auth_api_url" configuration option is not configured')
-        LICENSE_URL = "http://%s:%s/licenses/validate" % (cfg.CONF.auth.host, cfg.CONF.auth.port)
+        scheme = "https" if cfg.CONF.auth.use_ssl else "http"
+        LICENSE_URL= f"{scheme}://{cfg.CONF.auth.host}:{cfg.CONF.auth.port}/licenses/validate"
+    
+    verify_path = cfg.CONF.auth.ca_cert if cfg.CONF.auth.use_ssl else False
+    
+    cert = None
+    if cfg.CONF.auth.use_ssl or "https" in cfg.CONF.auth.auth_api_url:
+        if cfg.CONF.auth.cert and cfg.CONF.auth.key:
+            cert = (cfg.CONF.auth.cert, cfg.CONF.auth.key)
 
     if not os.path.exists(LICENSE_FILE_PATH):
         raise ValueError('License file "%s" doesn\'t exist' % (LICENSE_FILE_PATH))
@@ -452,7 +460,8 @@ def get_license_info():
         "key" : license_value
     }
     # Send POST request with JSON data
-    response = requests.post(LICENSE_URL, data=json.dumps(LICENSE_KEY))
+    response = requests.post(LICENSE_URL, data=json.dumps(LICENSE_KEY),
+                              verify=verify_path, cert=cert)
     if response.status_code != http_client.OK:
         raise Exception("Could not request url: {}".format(LICENSE_URL))
     # Parse the JSON response
