@@ -230,6 +230,9 @@ class ResourceController(object):
                     filters["__".join(path)] = v
                 except LookUpError as e:
                     raise ValueError(six.text_type(e))
+                
+        if self.__class__.__name__ == 'PacksController':
+            filters['enabled'] = True
 
         instances = self.access.query(
             exclude_fields=exclude_fields, only_fields=include_fields, **filters
