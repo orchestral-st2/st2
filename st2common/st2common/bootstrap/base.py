@@ -31,6 +31,7 @@ from st2common.persistence.pack import ConfigSchema
 from st2common.util.file_system import get_file_list
 from st2common.util.pack import get_pack_metadata
 from st2common.util.pack import get_pack_ref_from_metadata
+from st2common.util.pack_management import check_license_and_get_pack_status
 from st2common.exceptions.db import StackStormDBObjectNotFoundError
 
 __all__ = ["ResourceRegistrar"]
@@ -75,6 +76,10 @@ class ResourceRegistrar(object):
         # Maps runner name -> RunnerTypeDB
         self._runner_type_db_cache = {}
 
+    def get_class_prefix(self):
+        class_name = self.__class__.__name__
+        return class_name[:-len("Registrar")] if class_name.endswith("Registrar") else class_name
+    
     def get_resources_from_pack(self, resources_dir):
         resources = []
         for ext in self.ALLOWED_EXTENSIONS:
@@ -189,7 +194,8 @@ class ResourceRegistrar(object):
         )
         content["files"] = pack_file_list
         content["path"] = pack_dir
-
+        content["enabled"] = check_license_and_get_pack_status(pack_name)
+        
         pack_api = PackAPI(**content)
         pack_api.validate()
         pack_db = PackAPI.to_model(pack_api)

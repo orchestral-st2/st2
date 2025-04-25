@@ -153,6 +153,11 @@ class PackAPI(BaseAPI):
                 "description": "Location of the pack on disk in st2 system.",
                 "required": False,
             },
+            "enabled": {
+                "description": "Flag indicating of pack is enabled.",
+                "type": "boolean",
+                "default": False,
+            },
         },
         # NOTE: We add this here explicitly so we can gracefuly add new attributs to pack.yaml
         # without breaking existing installations
@@ -213,6 +218,7 @@ class PackAPI(BaseAPI):
         pack_dir = getattr(pack, "path", None)
         dependencies = getattr(pack, "dependencies", [])
         system = getattr(pack, "system", {})
+        enabled = getattr(pack, "enabled", False)
 
         model = cls.model(
             ref=ref,
@@ -229,6 +235,7 @@ class PackAPI(BaseAPI):
             stackstorm_version=stackstorm_version,
             path=pack_dir,
             python_versions=python_versions,
+            enabled=enabled,
         )
         return model
 

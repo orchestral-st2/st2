@@ -1,5 +1,6 @@
 # Copyright 2020 The StackStorm Authors.
 # Copyright 2019 Extreme Networks, Inc.
+# Copyright 2025 Orchestral.ai, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,23 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
-
-import os
-
-from st2common import __version__
-
 __all__ = [
-    "VERSION_STRING",
-    "DEFAULT_CONFIG_FILE_PATH",
-    "API_URL_ENV_VARIABLE_NAME",
-    "AUTH_TOKEN_ENV_VARIABLE_NAME",
+    "PACK_ENFORCEMENT_LOG_ERROR_MESSAGE",
+    "PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE",
 ]
 
-VERSION_STRING = "StackStorm v%s" % (__version__)
-DEFAULT_CONFIG_FILE_PATH = os.environ.get("ST2_CONFIG_PATH", "/etc/st2/st2.conf")
-
-API_URL_ENV_VARIABLE_NAME = "ST2_API_URL"
-AUTH_TOKEN_ENV_VARIABLE_NAME = "ST2_AUTH_TOKEN"
-
-LICENSE_FILE_PATH = "/etc/st2/license"
+PACK_ENFORCEMENT_LOG_ERROR_MESSAGE = """
+%(class)s for the pack "%(pack)s" could not be registered due to license provision, 
+please upgrade license to register %(class)s for the pack
+"""
+PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE = """
+Could not install "%s" pack due to license provision, please upgrade license to install this pack"""

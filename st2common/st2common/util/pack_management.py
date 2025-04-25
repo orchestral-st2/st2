@@ -43,10 +43,12 @@ from st2common.constants.pack import MANIFEST_FILE_NAME
 from st2common.constants.pack import PACK_RESERVED_CHARACTERS
 from st2common.constants.pack import PACK_VERSION_SEPARATOR
 from st2common.constants.pack import PACK_VERSION_REGEX
+from st2common.constants.pack import SYSTEM_PACK_NAMES, DEFAULT_PACK_NAME
 from st2common.services.packs import get_pack_from_index
 from st2common.util.pack import get_pack_metadata
 from st2common.util.pack import get_pack_ref_from_metadata
 from st2common.util.pack import get_pack_warnings
+from st2common.util.pack import get_all_enabled_packs_from_db
 from st2common.util.green import shell
 from st2common.util.versioning import complex_semver_match
 from st2common.util.versioning import get_stackstorm_version
@@ -59,6 +61,7 @@ __all__ = [
     "apply_pack_owner_group",
     "apply_pack_permissions",
     "get_and_set_proxy_config",
+    "check_license_and_get_pack_status",
 ]
 
 LOG = logging.getLogger(__name__)
@@ -395,6 +398,54 @@ def cleanup_repo(abs_local_path):
     if os.path.isdir(abs_local_path):
         shutil.rmtree(abs_local_path)
 
+def check_license_and_get_pack_status(pack_name):
+    """
+    checks license on packs and return pack status.
+    :rtype: ``str``
+    """
+    if pack_name in SYSTEM_PACK_NAMES or pack_name == DEFAULT_PACK_NAME:
+        return True
+    else:
+        enabled_packs = get_all_enabled_packs_from_db()
+        enabled_packs_excluding_system_packs = list(set(enabled_packs) - set(SYSTEM_PACK_NAMES))
+        if DEFAULT_PACK_NAME in enabled_packs_excluding_system_packs:
+            enabled_packs_excluding_system_packs.remove(DEFAULT_PACK_NAME)
+        try:
+            LOG.debug("Checking license on pack registeration for pack name: %s", pack_name)
+            license_info = utils.get_license_info()
+            pack_status = _get_pack_status(license_info, enabled_packs_excluding_system_packs, pack_name)
+            return pack_status
+        except Exception as e:
+            # Issue in retreiving packs from license API for pack enforcement
+            LOG.error(
+                    'Issue fetching license for pack "%s" in getting pack enforcement. Exception was "%s"',
+                    pack_name,
+                    e,
+                )
+            msg = (
+                'License for pack %s could not be found, please check the logs'
+                " or ask StackStorm administrator further" % (pack_name)
+            )
+            raise Exception(msg)
+
+
+def _get_pack_status(license_info, enabled_packs, pack_name):
+    """
+    get pack status True/False based on license validation on packs
+    :rtype: ``str``
+    """
+    license = license_info.get('license', {})
+    capabilities = license.get('capabilities', [])
+    if license and 'packs' in capabilities:
+        license_packs_count = license.get("description",{}).get("packs",{}).get("count", 0)
+        if len(enabled_packs) >= license_packs_count and pack_name not in enabled_packs:
+            return False
+        return True
+    else:
+        raise ValueError(
+            "License not found or capabilities to install packs does not exists"
+            " for license %s" % (license_info)
+        )
 
 # Utility functions
 def get_repo_url(pack, proxy_config=None):

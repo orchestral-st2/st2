@@ -17,10 +17,12 @@ from __future__ import absolute_import
 import os
 import os.path
 
+import mock
 import unittest2
 from oslo_config import cfg
 
 from st2common.constants.action import LIBS_DIR as ACTION_LIBS_DIR
+from st2common.constants.system import LICENSE_FILE_PATH
 from st2common.content.utils import get_pack_base_path
 from st2common.content.utils import get_packs_base_paths
 from st2common.content.utils import get_aliases_base_paths
@@ -29,6 +31,8 @@ from st2common.content.utils import get_pack_file_abs_path
 from st2common.content.utils import get_entry_point_abs_path
 from st2common.content.utils import get_action_libs_abs_path
 from st2common.content.utils import get_relative_path_to_pack_file
+from st2common.content.utils import get_license_info
+from st2common.util.compat import mock_open_name
 from st2tests import config as tests_config
 from st2tests.fixturesloader import get_fixtures_packs_base_path
 from st2tests.fixtures.packs.dummy_pack_1.fixture import (
@@ -297,3 +301,52 @@ class ContentUtilsTestCase(unittest2.TestCase):
             pack_ref=pack_ref,
             file_path=file_path,
         )
+
+    @mock.patch("os.path.exists", return_value=True)
+    @mock.patch(mock_open_name, new_callable=mock.mock_open, create=True)
+    @mock.patch("requests.post")
+    def test_get_license_info(self, mock_post, mock_file, mock_exists):
+        # Sample mocked response from the API
+        mock_response = {
+            "license": {
+                "token": "JZDYOLisioB4i5IC",
+                "expires": "2025-04-14T00:00:00Z",
+                "grace": 30,
+                "capabilities": ["netapp", "packs", "basic"],
+                "description": {
+                    "netapp": {"device_count": 4},
+                    "packs": {"count": 10}
+                }
+            },
+            "valid": "True"
+        }
+        
+        # Mock the response object
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = mock_response
+        
+        # Call the function
+        result = get_license_info()
+        
+        # Assertions
+        self.assertEqual(result, mock_response)
+        mock_exists.assert_called_once_with(os.path.join(LICENSE_FILE_PATH))
+        mock_file.assert_called_once_with(os.path.join(LICENSE_FILE_PATH), "r")
+        mock_post.assert_called_once()
+
+    @mock.patch("os.path.exists", return_value=True)
+    @mock.patch(mock_open_name, new_callable=mock.mock_open, create=True)
+    @mock.patch("requests.post")
+    def test_get_license_info_request_exception(self, mock_post, mock_file, mock_exists):
+        """Test when requests.post raises an exception."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 500  # Simulating a server error
+        mock_post.return_value = mock_response
+        
+        with self.assertRaises(Exception) as context:
+            get_license_info()
+        
+        self.assertIn("Could not request url", str(context.exception))
+        mock_exists.assert_called_once_with(LICENSE_FILE_PATH)
+        mock_file.assert_called_once_with(LICENSE_FILE_PATH, "r")
+        mock_post.assert_called_once()

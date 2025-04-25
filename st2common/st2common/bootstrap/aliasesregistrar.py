@@ -21,11 +21,13 @@ import st2common.content.utils as content_utils
 
 from st2common import log as logging
 from st2common.constants.meta import ALLOWED_EXTS
+from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_LOG_ERROR_MESSAGE
 from st2common.bootstrap.base import ResourceRegistrar
 from st2common.models.api.action import ActionAliasAPI
 from st2common.persistence.action import Action
 from st2common.persistence.actionalias import ActionAlias
 from st2common.exceptions.db import StackStormDBObjectNotFoundError
+from st2common.services import packs as packs_service
 
 __all__ = ["AliasesRegistrar", "register_aliases"]
 
@@ -57,6 +59,11 @@ class AliasesRegistrar(ResourceRegistrar):
                 LOG.debug("Pack %s does not contain aliases.", pack)
                 continue
             try:
+                # Check if pack has enforcement active then do not register aliases
+                if not packs_service.is_pack_enabled(pack):
+                    format_values = {"class": self.get_class_prefix(), "pack": pack}
+                    LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
+                    continue
                 LOG.debug(
                     "Registering aliases from pack %s:, dir: %s", pack, aliases_dir
                 )
@@ -96,6 +103,12 @@ class AliasesRegistrar(ResourceRegistrar):
         overridden_count = 0
         if not aliases_dir:
             return registered_count, overridden_count
+
+        # Check if pack has enforcement active then do not register aliases
+        if not packs_service.is_pack_enabled(pack):
+            format_values = {"class": self.get_class_prefix(), "pack": pack}
+            LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
+            return registered_count
 
         LOG.debug("Registering aliases from pack %s:, dir: %s", pack, aliases_dir)
 

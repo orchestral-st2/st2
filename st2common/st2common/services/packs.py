@@ -32,6 +32,7 @@ from st2common.content.utils import get_pack_base_path
 from st2common.exceptions.content import ResourceDiskFilesRemovalError
 from st2common.models.db.stormbase import UIDFieldMixin
 from st2common.persistence.pack import Pack
+from st2common.constants.pack import DEFAULT_PACK_NAME, SYSTEM_PACK_NAMES
 from st2common.util.misc import lowercase_value
 from st2common.util.jsonify import json_encode
 
@@ -46,6 +47,7 @@ __all__ = [
     "temp_backup_action_files",
     "restore_temp_action_files",
     "remove_temp_action_files",
+    "is_pack_enabled"
 ]
 
 EXCLUDE_FIELDS = ["repo_url", "email"]
@@ -488,3 +490,11 @@ def remove_temp_action_files(temp_sub_dir):
                 "and delete the temporary directory manually" % (temp_dir_path)
             )
             raise Exception(msg)
+        
+
+def is_pack_enabled(pack_name):
+    if pack_name not in SYSTEM_PACK_NAMES and pack_name != DEFAULT_PACK_NAME:
+       pack_db = get_pack_by_ref(pack_ref=pack_name)
+       if not pack_db.enabled:
+           return False
+    return True

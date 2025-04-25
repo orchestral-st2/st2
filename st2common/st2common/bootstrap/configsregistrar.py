@@ -23,10 +23,12 @@ from oslo_config import cfg
 from st2common import log as logging
 from st2common.content import utils as content_utils
 from st2common.constants.meta import ALLOWED_EXTS
+from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_LOG_ERROR_MESSAGE
 from st2common.bootstrap.base import ResourceRegistrar
 from st2common.models.api.pack import ConfigAPI
 from st2common.persistence.pack import Config
 from st2common.exceptions.db import StackStormDBObjectNotFoundError
+from st2common.services import packs as packs_service
 
 __all__ = ["ConfigsRegistrar"]
 
@@ -81,6 +83,11 @@ class ConfigsRegistrar(ResourceRegistrar):
                 continue
 
             try:
+                # Check if pack has enforcement active then do not register configs
+                if not packs_service.is_pack_enabled(pack_name):
+                    format_values = {"class": self.get_class_prefix(), "pack": pack_name}
+                    LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
+                    continue
                 self._register_config_for_pack(pack=pack_name, config_path=config_path)
             except Exception as e:
                 if self._fail_on_failure:
@@ -115,6 +122,14 @@ class ConfigsRegistrar(ResourceRegistrar):
         if not os.path.isfile(config_path):
             return 0
 
+        # Check if pack has enforcement active then do not register configs
+        if not packs_service.is_pack_enabled(pack_name):
+            format_values = {"class": self.get_class_prefix(), "pack": pack_name}
+            LOG.error(PACK_ENFORCEMENT_LOG_ERROR_MESSAGE,format_values)
+            return 0
+
+        LOG.debug("Registering configs from pack %s, dir: %s", pack_name, config_path)
+        
         self._register_config_for_pack(pack=pack_name, config_path=config_path)
         return 1
 

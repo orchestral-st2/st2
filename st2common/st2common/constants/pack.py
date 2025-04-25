@@ -69,12 +69,16 @@ DEFAULT_PACK_NAME = "default"
 # Name of the chatops pack
 CHATOPS_PACK_NAME = "chatops"
 
+# Name of the st2 pack
+ST2_PACK_NAME = "st2"
+
 # A list of system pack names
 SYSTEM_PACK_NAMES = [
     CHATOPS_PACK_NAME,
     SYSTEM_PACK_NAME,
     PACKS_PACK_NAME,
     LINUX_PACK_NAME,
+    ST2_PACK_NAME,
 ]
 
 # A list of pack names which can't be used by user-supplied packs

@@ -50,6 +50,11 @@ class PackDB(stormbase.StormFoundationDB, stormbase.UIDFieldMixin, me.DynamicDoc
     path = me.StringField(required=False)
     dependencies = me.ListField(field=me.StringField())
     system = me.DictField()
+    enabled = me.BooleanField(
+        required=False,
+        default=False,
+        help_text="A flag indicating whether the pack is enabled.",
+    )
 
     meta = {"indexes": stormbase.UIDFieldMixin.get_indexes()}
 

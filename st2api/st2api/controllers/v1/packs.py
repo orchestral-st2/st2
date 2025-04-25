@@ -34,7 +34,9 @@ import st2common.bootstrap.runnersregistrar as runners_registrar
 from st2common.bootstrap.rulesregistrar import RulesRegistrar
 import st2common.bootstrap.ruletypesregistrar as rule_types_registrar
 from st2common.bootstrap.configsregistrar import ConfigsRegistrar
+from st2common.constants.pack_enforcement import PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE
 import st2common.content.utils as content_utils
+from st2common.exceptions.rbac import AccessDeniedError
 from st2common.models.db.auth import UserDB
 from st2common.models.api.action import LiveActionCreateAPI
 from st2common.models.api.pack import PackAPI
@@ -46,6 +48,7 @@ from st2common.rbac.backends import get_rbac_backend
 from st2common.services import packs as packs_service
 from st2common.router import abort
 from st2common.router import Response
+from st2common.util.pack_management import check_license_and_get_pack_status
 
 from st2api.controllers.resource import ResourceController
 from st2api.controllers.v1.actionexecutions import ActionExecutionsControllerMixin
@@ -93,6 +96,25 @@ def _get_proxy_config():
 
 class PackInstallController(ActionExecutionsControllerMixin):
     def post(self, pack_install_request, requester_user=None):
+        
+        if len(pack_install_request.packs) == 1:
+            pack = pack_install_request.packs[0]
+            pack_status = check_license_and_get_pack_status(pack)
+            if not pack_status:
+                raise AccessDeniedError(
+                    message=PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE % pack,
+                    user_db=requester_user,
+                )
+        else:
+            for pack in pack_install_request.packs:
+                pack_status = check_license_and_get_pack_status(pack)
+                if not pack_status:
+                    raise AccessDeniedError(
+                        message=PACK_ENFORCEMENT_INSTALL_ERROR_MESSAGE
+                        % pack_install_request.packs,
+                        user_db=requester_user,
+                    )
+                
         parameters = {
             "packs": pack_install_request.packs,
         }

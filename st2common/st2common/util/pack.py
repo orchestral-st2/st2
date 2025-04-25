@@ -28,6 +28,7 @@ from st2common.constants.pack import RESERVED_PACK_LIST
 from st2common.content.loader import MetaLoader
 from st2common.persistence.pack import Pack
 from st2common.exceptions.apivalidation import ValueValidationException
+from st2common.exceptions.db import StackStormDBObjectNotFoundError
 from st2common.util import jinja as jinja_utils
 
 __all__ = [
@@ -38,6 +39,7 @@ __all__ = [
     "get_pack_common_libs_path_for_pack_db",
     "validate_config_against_schema",
     "normalize_pack_version",
+    "get_all_enabled_packs_from_db",
 ]
 
 # Common format for python 2.7 warning
@@ -234,3 +236,17 @@ def normalize_pack_version(version):
         version = version + ".0"
 
     return version
+
+def get_all_enabled_packs_from_db():
+    """
+    Get packs having flag as enabled True from Pack DB
+    :rtype: ``list``
+    """
+    try:
+        pack_dbs = Pack.get_all()
+        enabled_packs = list(pack_db.ref for pack_db in pack_dbs if pack_db.enabled)
+        return enabled_packs
+    except StackStormDBObjectNotFoundError:
+        pack_dbs = None
+        raise
+    

@@ -18,6 +18,7 @@ import mock
 import sys
 
 from st2common.content.loader import ContentPackLoader
+from st2common.exceptions.rbac import AccessDeniedError
 from st2common.models.db.pack import PackDB
 from st2common.persistence.pack import Pack
 from st2common.persistence.action import Action
@@ -41,6 +42,8 @@ from st2tests.fixtures.packs.dummy_pack_10.fixture import (
 from st2tests.fixtures.packs.dummy_pack_15.fixture import (
     PACK_NAME as DUMMY_PACK_15,
 )
+
+from st2common.constants.pack import DEFAULT_PACK_NAME, SYSTEM_PACK_NAMES
 
 __all__ = ["PacksControllerTestCase"]
 
@@ -145,14 +148,34 @@ class PacksControllerTestCase(
         cls.pack_db_3 = PackDB(
             name="pack3-name",
             ref="pack3-ref",
-            description="foo",
+            description="pack 3",
             version="0.1.0",
             author="foo",
-            email="test@example.com",
+            email="test3@example.com",
+        )
+        cls.pack_db_4 = PackDB(
+            name="pack4",
+            ref="pack4",
+            description="pack 4",
+            version="0.1.0",
+            author="bar",
+            email="test4@example.com",
+            enabled = True,
+        )
+        cls.pack_db_5 = PackDB(
+            name="pack5",
+            ref="pack5",
+            description="pack 5",
+            version="0.1.0",
+            author="pack5",
+            email="test5@example.com",
+            enabled = False,
         )
         Pack.add_or_update(cls.pack_db_1)
         Pack.add_or_update(cls.pack_db_2)
         Pack.add_or_update(cls.pack_db_3)
+        Pack.add_or_update(cls.pack_db_4)
+        Pack.add_or_update(cls.pack_db_5)
 
     def test_get_all(self):
         resp = self.app.get("/v1/packs")
@@ -209,6 +232,48 @@ class PacksControllerTestCase(
 
         self.assertEqual(resp.status_int, 202)
         self.assertEqual(resp.json, {"execution_id": "123"})
+    
+    @mock.patch.object(ActionExecutionsControllerMixin, "_handle_schedule_execution")
+    @mock.patch("st2api.controllers.v1.packs.check_license_and_get_pack_status", return_value=False)
+    def test_install_single_pack_with_fails_license(self, mock_check_license, _handle_schedule_execution):
+        _handle_schedule_execution.return_value = Response(json={"id": "123"})
+        payload = {"packs": ["my_pack"]}
+        
+        resp = self.app.post_json("/v1/packs/install", payload, expect_errors=True)
+        # Assert that we got a 403 Forbidden
+        self.assertEqual(resp.status_code, 403)
+        expected_error_message = 'Could not install "my_pack" pack due to license provision'
+
+        self.assertIn(expected_error_message, resp.json.get("faultstring"))
+        mock_check_license.assert_called_once_with('my_pack')
+
+    @mock.patch.object(ActionExecutionsControllerMixin, "_handle_schedule_execution")
+    @mock.patch("st2api.controllers.v1.packs.check_license_and_get_pack_status", side_effect=[True, False])
+    def test_install_multiple_packs_fails_license(self, mock_check_license, _handle_schedule_execution):
+        _handle_schedule_execution.return_value = Response(json={"id": "123"})
+        payload = {"packs": ["pack1","pack2"]}
+        
+        resp = self.app.post_json("/v1/packs/install", payload, expect_errors=True)
+        # Assert that we got a 403 Forbidden
+        self.assertEqual(resp.status_code, 403)
+        expected_error_message = 'Could not install "[\'pack1\', \'pack2\']" pack due to license provision'
+
+        self.assertIn(expected_error_message, resp.json.get("faultstring"))
+        self.assertEqual(mock_check_license.call_count, 2)
+
+    @mock.patch.object(ActionExecutionsControllerMixin, "_handle_schedule_execution")
+    @mock.patch("st2api.controllers.v1.packs.check_license_and_get_pack_status", return_value=True)
+    def test_all_packs_pass_license(self, mock_check_license, _handle_schedule_execution):
+        """Should NOT raise if all packs pass license check."""
+        _handle_schedule_execution.return_value = Response(json={"id": "123"})
+        payload = {"packs": ["pack1","pack2"]}
+
+        try:
+            self.app.post_json("/v1/packs/install", payload)
+        except AccessDeniedError:
+            self.fail("AccessDeniedError raised unexpectedly")
+        
+        self.assertEqual(mock_check_license.call_count, 2)
 
     @mock.patch.object(ActionExecutionsControllerMixin, "_handle_schedule_execution")
     def test_uninstall(self, _handle_schedule_execution):
@@ -691,3 +756,47 @@ class PacksControllerTestCase(
 
     def _do_delete(self, object_ids):
         pass
+
+    @mock.patch.object(pack_service, "get_pack_by_ref")
+    def test_pack_in_system_packs(self, mock_get_pack):
+        """Test when pack is in SYSTEM_PACK_NAMES, should return True."""
+        system_pack = "core"
+        SYSTEM_PACK_NAMES.append(system_pack)  # Ensure it's in system packs
+        mock_get_pack.return_value = self.pack_db_1
+        self.assertTrue(pack_service.is_pack_enabled(system_pack))
+        mock_get_pack.assert_not_called()
+        SYSTEM_PACK_NAMES.remove(system_pack)  # Cleanup
+
+    @mock.patch.object(pack_service, "get_pack_by_ref")
+    def test_pack_not_in_system_packs_and_not_default_and_enabled_True(self, mock_get_pack):
+        """Test when pack is NOT in SYSTEM_PACK_NAMES and pack is not DEFAULT PACK returns True"""
+        pack_name = "pack4"
+        SYSTEM_PACK_NAMES.clear()  # Ensure it's NOT in system packs
+        mock_get_pack.return_value = self.pack_db_4
+        self.assertTrue(pack_service.is_pack_enabled(pack_name))
+        mock_get_pack.assert_called_once_with(pack_ref=pack_name)
+
+    @mock.patch.object(pack_service, "get_pack_by_ref")
+    def test_pack_not_in_system_packs_and_not_default_and_enabled_True(self, mock_get_pack):
+        """Test when pack is NOT in SYSTEM_PACK_NAMES and enforcement is NOT active."""
+        pack_name = "new_pack"
+        SYSTEM_PACK_NAMES.clear()
+        mock_get_pack.return_value = self.pack_db_5
+        
+        self.assertFalse(pack_service.is_pack_enabled(pack_name))
+        mock_get_pack.assert_called_once_with(pack_ref=pack_name)
+    
+    @mock.patch.object(pack_service, "get_pack_by_ref")
+    def test_pack_with_none_raises_attribute_error(self, mock_get_pack):
+        """Test when get_pack_by_ref setting None, should raise attribute error."""
+        pack_name = "missing_pack"
+        SYSTEM_PACK_NAMES.clear()
+        mock_get_pack.return_value = None  # Simulate missing pack
+        with self.assertRaises(AttributeError) as context:
+            pack_service.is_pack_enabled(pack_name)
+        self.assertIn("NoneType", str(context.exception))
+
+    def test_pack_is_default_pack(self):
+        """Test when pack is DEFAULT_PACK_NAME, should return True."""
+        pack_name = DEFAULT_PACK_NAME
+        self.assertTrue(pack_service.is_pack_enabled(pack_name))

@@ -14,14 +14,20 @@
 # limitations under the License.
 
 from __future__ import absolute_import
+import json
 import os
 import os.path
+import requests
+from six.moves import http_client
+from st2common.constants.system import LICENSE_FILE_PATH
 
 from oslo_config import cfg
 
 from st2common.constants.action import LIBS_DIR as ACTION_LIBS_DIR
+from st2common.log import LOG
 from st2common.util.types import OrderedSet
 from st2common.util.shell import quote_unix
+from st2common.util.url import get_url_without_trailing_slash
 
 __all__ = [
     "get_pack_group",
@@ -34,6 +40,7 @@ __all__ = [
     "get_relative_path_to_pack_file",
     "check_pack_directory_exists",
     "check_pack_content_directory_exists",
+    "get_license_info",
 ]
 
 INVALID_FILE_PATH_ERROR = """
@@ -422,3 +429,41 @@ def get_aliases_base_paths():
     result = [path for path in result if path]
     result = list(OrderedSet(result))
     return result
+
+def get_license_info():
+    """
+    Returns information of license from license api 
+    :rtype: ``dict``
+    """
+    if cfg.CONF.auth.auth_api_url:
+        auth_api_url = get_url_without_trailing_slash(cfg.CONF.auth.auth_api_url)
+        LICENSE_URL = "%s/licenses/validate" % auth_api_url
+    else:
+        LOG.warn('"auth.auth_api_url" configuration option is not configured')
+        scheme = "https" if cfg.CONF.auth.use_ssl else "http"
+        LICENSE_URL= f"{scheme}://{cfg.CONF.auth.host}:{cfg.CONF.auth.port}/licenses/validate"
+    
+    verify_path = cfg.CONF.auth.ca_cert if cfg.CONF.auth.use_ssl else False
+    
+    cert = None
+    if cfg.CONF.auth.use_ssl or "https" in cfg.CONF.auth.auth_api_url:
+        if cfg.CONF.auth.cert and cfg.CONF.auth.key:
+            cert = (cfg.CONF.auth.cert, cfg.CONF.auth.key)
+
+    if not os.path.exists(LICENSE_FILE_PATH):
+        raise ValueError('License file "%s" doesn\'t exist' % (LICENSE_FILE_PATH))
+
+    with open(os.path.join(LICENSE_FILE_PATH), "r") as fp:
+        license_value = fp.read()
+
+    LICENSE_KEY = {
+        "key" : license_value
+    }
+    # Send POST request with JSON data
+    response = requests.post(LICENSE_URL, data=json.dumps(LICENSE_KEY),
+                              verify=verify_path, cert=cert)
+    if response.status_code != http_client.OK:
+        raise Exception("Could not request url: {}".format(LICENSE_URL))
+    # Parse the JSON response
+    license_info = response.json()  # Parse the response into a Python dictionary
+    return license_info
