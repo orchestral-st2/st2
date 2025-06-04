@@ -140,7 +140,7 @@ class KeyValuePairAPI(BaseAPI):
         return cls(**attrs)
 
     @classmethod
-    def to_model(cls, kvp):
+    def to_model(cls, kvp, allow_corrupted=False):
         if not KeyValuePairAPI.crypto_setup:
             KeyValuePairAPI._setup_crypto()
 
@@ -174,12 +174,18 @@ class KeyValuePairAPI(BaseAPI):
             try:
                 symmetric_decrypt(KeyValuePairAPI.crypto_key, value)
             except Exception:
-                msg = (
-                    'Failed to verify the integrity of the provided value for key "%s". Ensure '
-                    "that the value is encrypted with the correct key and not corrupted."
-                    % (name)
-                )
-                raise ValueError(msg)
+                if not allow_corrupted:
+                    msg = (
+                        'Failed to verify the integrity of the provided value for key "%s". Ensure '
+                        "that the value is encrypted with the correct key and not corrupted."
+                        % (name)
+                    )
+                    raise ValueError(msg)
+                else:
+                    LOG.warning(
+                        'Corrupted encrypted key "%s" detected. Proceeding with corrupted value for deletion.',
+                        name
+                    )
 
             # Additional safety check to ensure that the value hasn't been decrypted
             if value != original_value:

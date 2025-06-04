@@ -471,7 +471,7 @@ class KeyValuePairController(ResourceController):
             kvp_api = self._get_one_by_scope_and_name(
                 name=key_ref, scope=scope, from_model_kwargs=from_model_kwargs
             )
-            kvp_db = KeyValuePairAPI.to_model(kvp_api)
+            kvp_db = KeyValuePairAPI.to_model(kvp_api, allow_corrupted=True)
 
             extra["kvp_db"] = kvp_db
             LOG.debug("DELETE /v1/keys/%s", name, extra=extra)
